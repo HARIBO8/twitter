@@ -3,27 +3,36 @@
 {% block title %}ホーム{% endblock %}
 
 {% block content %}
-    <h2>📢 全ユーザーの投稿</h2>
-    {% for tweet in all_tweets %}
+
+<!-- 🔁 投稿タイプ切り替えタブ -->
+<div style="display: flex; gap: 20px; margin-bottom: 20px;">
+  <a href="{% url 'home' %}?filter=all" class="{% if filter_type == 'all' %}active-tab{% endif %}" style="padding: 10px; text-decoration: none;">
+    📢 For You
+  </a>
+  <a href="{% url 'home' %}?filter=follow" class="{% if filter_type == 'follow' %}active-tab{% endif %}" style="padding: 10px; text-decoration: none;">
+    👥 Following
+  </a>
+</div>
+
+<style>
+.active-tab {
+  border-bottom: 3px solid dodgerblue;
+  font-weight: bold;
+}
+</style>
+
+
+<!-- ✅ 投稿表示 -->
+{% if tweets %}
+  {% for tweet in tweets %}
     <p>
-        <strong>
-        <a href="{% url 'user_profile' tweet.user.id %}">
-            {{ tweet.user.username }}
-        </a>
-        </strong>: {{ tweet.content }}<br>
-        <small>{{ tweet.created_at }}</small>
+      <strong><a href="{% url 'user_profile' tweet.user.id %}">{{ tweet.user.username }}</a></strong>：  
+      {{ tweet.content }}<br>
+      <small>{{ tweet.created_at }}</small>
     </p>
-    {% empty %}
-    <p>まだ投稿はありません。</p>
-    {% endfor %}
+  {% endfor %}
+{% else %}
+  <p>投稿がありません。</p>
+{% endif %}
 
-    <hr>
-
-    <h2>👥 フォロー中ユーザーの投稿</h2>
-    {% for tweet in following_tweets %}
-    <p><strong>{{ tweet.user.username }}</strong>: {{ tweet.content }}</p>
-    {% empty %}
-    <p>フォロー中ユーザーの投稿はまだありません。</p>
-    {% endfor %}
-    
 {% endblock %}
