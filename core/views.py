@@ -21,17 +21,21 @@ from .models import Follow
 
 @login_required
 def home(request):
-    # 全ユーザーの投稿（降順）
-    all_tweets = Tweet.objects.all().order_by('-created_at')
+    filter_type = request.GET.get('filter', 'all')
 
-    # フォロー中のユーザーの投稿
-    following_ids = Follow.objects.filter(follower=request.user).values_list('following__id', flat=True)
-    following_tweets = Tweet.objects.filter(user__id__in=following_ids).order_by('-created_at')
+    if filter_type == 'follow':
+        # フォロー中ユーザーの投稿のみ
+        following_ids = Follow.objects.filter(follower=request.user).values_list('following__id', flat=True)
+        tweets = Tweet.objects.filter(user__id__in=following_ids).order_by('-created_at')
+    else:
+        # 全ユーザーの投稿
+        tweets = Tweet.objects.all().order_by('-created_at')
 
     return render(request, 'core/home.html', {
-        'all_tweets': all_tweets,
-        'following_tweets': following_tweets,
+        'tweets': tweets,
+        'filter_type': filter_type,
     })
+
 
 
 from .forms import TweetForm
