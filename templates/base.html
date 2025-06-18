@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}My SNS{% endblock %}</title>
+</head>
+<body>
+
+  {% include 'core/header.html' %}
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  {% include 'core/footer.html' %}
+
+</body>
+</html>

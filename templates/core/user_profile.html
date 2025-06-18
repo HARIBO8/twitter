@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ profile_user.username }}のプロフィール{% endblock %}
+
+{% block content %}
+  <h2>👤 {{ profile_user.username }} のプロフィール</h2>
+
+  {% if profile.avatar %}
+    <img src="{{ profile.avatar.url }}" width="100" alt="プロフィール画像">
+  {% endif %}
+
+  <p><strong>自己紹介：</strong> {{ profile.bio }}</p>
+
+  <hr>
+
+  <h3>📝 {{ profile_user.username }} の投稿</h3>
+  {% for tweet in tweets %}
+    <p>{{ tweet.content }}<br><small>{{ tweet.created_at }}</small></p>
+  {% empty %}
+    <p>まだ投稿がありません。</p>
+  {% endfor %}
+{% endblock %}

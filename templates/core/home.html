@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}ホーム{% endblock %}
+
+{% block content %}
+    <h2>📢 全ユーザーの投稿</h2>
+    {% for tweet in all_tweets %}
+    <p>
+        <strong>
+        <a href="{% url 'user_profile' tweet.user.id %}">
+            {{ tweet.user.username }}
+        </a>
+        </strong>: {{ tweet.content }}<br>
+        <small>{{ tweet.created_at }}</small>
+    </p>
+    {% empty %}
+    <p>まだ投稿はありません。</p>
+    {% endfor %}
+
+    <hr>
+
+    <h2>👥 フォロー中ユーザーの投稿</h2>
+    {% for tweet in following_tweets %}
+    <p><strong>{{ tweet.user.username }}</strong>: {{ tweet.content }}</p>
+    {% empty %}
+    <p>フォロー中ユーザーの投稿はまだありません。</p>
+    {% endfor %}
+
+    
+{% endblock %}
