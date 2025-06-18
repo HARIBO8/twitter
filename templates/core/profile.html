@@ -14,6 +14,33 @@
 
   <hr>
 
+<p>
+  <button onclick="loadFollowList('followers')">フォロワー一覧</button>
+  <button onclick="loadFollowList('following')">フォロー中一覧</button>
+</p>
+
+<div id="follow-list-popup" style="display:none; border:1px solid #ccc; padding:10px;"></div>
+
+<script>
+function loadFollowList(type) {
+  const userId = "{{ request.user.id }}";  // ← 文字列として受け取る
+  fetch(`/${type}/${userId}/`)
+    .then(response => response.json())
+    .then(data => {
+      const div = document.getElementById('follow-list-popup');
+      div.innerHTML = '<h3>' + (type === 'followers' ? 'フォロワー' : 'フォロー中') + '</h3>';
+      data.forEach(user => {
+        div.innerHTML += '<p>' + user.username + '</p>';
+      });
+      div.style.display = 'block';
+    });
+}
+</script>
+
+
+
+  <hr>
+
   <h3>📝 あなたの投稿</h3>
   {% for tweet in tweets %}
     <p>{{ tweet.content }}<br><small>{{ tweet.created_at }}</small></p>

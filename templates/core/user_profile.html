@@ -13,6 +13,41 @@
 
   <hr>
 
+{% if profile_user != request.user %}
+  <button id="follow-btn" data-user-id="{{ profile_user.id }}">
+    フォロー
+  </button>
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const btn = document.getElementById('follow-btn');
+  if (btn) {
+    btn.addEventListener('click', () => {
+      const userId = btn.dataset.userId;
+      fetch(`/follow-toggle/${userId}/`, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': '{{ csrf_token }}',
+          'Accept': 'application/json',
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === 'followed') {
+          btn.textContent = 'フォロー解除';
+        } else if (data.status === 'unfollowed') {
+          btn.textContent = 'フォロー';
+        }
+      });
+    });
+  }
+});
+</script>
+
+
+  <hr>
+
   <h3>📝 {{ profile_user.username }} の投稿</h3>
   {% for tweet in tweets %}
     <p>{{ tweet.content }}<br><small>{{ tweet.created_at }}</small></p>

@@ -74,3 +74,35 @@ def user_profile(request, user_id):
         'profile': profile,
         'tweets': tweets,
     })
+
+
+from django.http import JsonResponse
+from .models import Follow
+
+@login_required
+def toggle_follow(request, user_id):
+    target = get_object_or_404(User, id=user_id)
+    if target == request.user:
+        return JsonResponse({'error': '自分はフォローできません。'}, status=400)
+
+    follow_obj, created = Follow.objects.get_or_create(follower=request.user, following=target)
+    if not created:
+        follow_obj.delete()
+        return JsonResponse({'status': 'unfollowed'})
+    else:
+        return JsonResponse({'status': 'followed'})
+    
+
+@login_required
+def get_followers(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    followers = user.follower_set.select_related('follower')
+    data = [{'username': f.follower.username} for f in followers]
+    return JsonResponse(data, safe=False)
+
+@login_required
+def get_following(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    followings = user.following_set.select_related('following')
+    data = [{'username': f.following.username} for f in followings]
+    return JsonResponse(data, safe=False)

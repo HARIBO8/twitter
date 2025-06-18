@@ -31,3 +31,13 @@ urlpatterns = [
     path('profile/', views.profile_view, name='profile'),
     path('user/<int:user_id>/', views.user_profile, name='user_profile'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+
+from django.urls import path
+from core import views
+
+urlpatterns += [
+    path('follow-toggle/<int:user_id>/', views.toggle_follow, name='toggle_follow'),
+    path('followers/<int:user_id>/', views.get_followers, name='get_followers'),
+    path('following/<int:user_id>/', views.get_following, name='get_following'),
+]
