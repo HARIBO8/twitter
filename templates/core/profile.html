@@ -3,6 +3,7 @@
 {% block title %}プロフィール{% endblock %}
 
 {% block content %}
+
   <h2>👤 プロフィール</h2>
 
   {% if profile.avatar %}
@@ -42,9 +43,85 @@ function loadFollowList(type) {
   <hr>
 
   <h3>📝 あなたの投稿</h3>
+
   {% for tweet in tweets %}
-    <p>{{ tweet.content }}<br><small>{{ tweet.created_at }}</small></p>
+    <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
+      {% if tweet.original %}
+        <p><strong>{{ tweet.user.username }}</strong> がリポストしました：</p>
+        <div style="margin-left: 20px; padding: 5px; border-left: 2px solid #ccc;">
+          <p><strong>{{ tweet.original.user.username }}</strong>: {{ tweet.original.content }}</p>
+          <small>{{ tweet.original.created_at }}</small>
+          <div>
+            <button class="reply-btn" data-id="{{ tweet.original.id }}">💬 {{ tweet.original.replies.count }}件</button>
+            <button class="retweet-btn" data-id="{{ tweet.original.id }}">🔁 {{ tweet.original.retweets.count }}件</button>
+            <button class="like-btn" data-id="{{ tweet.original.id }}">❤️ {{ tweet.original.likes.count }}件</button>
+          </div>
+        </div>
+      {% else %}
+        <p><strong>{{ tweet.user.username }}</strong>: {{ tweet.content }}</p>
+        <small>{{ tweet.created_at }}</small>
+        <div>
+          <button class="reply-btn" data-id="{{ tweet.id }}">💬 {{ tweet.replies.count }}件</button>
+          <button class="retweet-btn" data-id="{{ tweet.id }}">🔁 {{ tweet.retweets.count }}件</button>
+          <button class="like-btn" data-id="{{ tweet.id }}">❤️ {{ tweet.likes.count }}件</button>
+        </div>
+        {% if not tweet.original %}
+          <div style="margin-top: 5px;">
+            <a href="{% url 'edit_tweet' tweet.id %}">✏️ 編集</a> |
+            <a href="{% url 'delete_tweet' tweet.id %}" onclick="return confirm('本当に削除しますか？');">🗑️ 削除</a>
+          </div>
+        {% endif %}
+      {% endif %}
+    </div>
   {% empty %}
     <p>まだ投稿がありません。</p>
   {% endfor %}
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+
+    document.querySelectorAll('.like-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.id;
+        fetch(`/like/${id}/`, {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Accept': 'application/json',
+          }
+        })
+        .then(res => res.json())
+        .then(data => {
+          btn.innerHTML = `❤️ ${data.count}件`;
+        });
+      });
+    });
+
+    document.querySelectorAll('.retweet-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.id;
+        fetch(`/retweet_toggle/${id}/`, {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Accept': 'application/json',
+          }
+        })
+        .then(res => res.json())
+        .then(data => {
+          btn.innerHTML = `🔁 ${data.count}件`;
+        });
+      });
+    });
+
+    document.querySelectorAll('.reply-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.id;
+        window.location.href = `/reply/${id}/`;
+      });
+    });
+
+  });
+</script>
+
 {% endblock %}

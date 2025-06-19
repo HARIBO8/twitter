@@ -19,8 +19,28 @@ class Follow(models.Model):
 
 class Tweet(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    content = models.TextField(max_length=280)
+    content = models.TextField(blank=True)  # リツイートは空OK
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return f"{self.user.username}: {self.content[:30]}"
+    # 💬 リプライ先
+    parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE, related_name='replies')
+
+    # 🔁 リツイート元
+    original = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL, related_name='retweets')
+
+    def is_reply(self):
+        return self.parent is not None
+
+    def is_retweet(self):
+        return self.original is not None
+
+    
+class Like(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    tweet = models.ForeignKey(Tweet, on_delete=models.CASCADE, related_name='likes')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'tweet')
+
+

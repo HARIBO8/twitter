@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>返信する：</h2>
+  <p>👉 {{ parent.user.username }} の投稿：{{ parent.content }}</p>
+
+  <form method="post">
+    {% csrf_token %}
+    <textarea name="content" rows="3" cols="40" required></textarea><br>
+    <button type="submit">返信する</button>
+  </form>
+{% endblock %}

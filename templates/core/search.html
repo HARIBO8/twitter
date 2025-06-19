@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>「{{ query }}」の検索結果</h2>
+
+  {% if tweets %}
+    {% for tweet in tweets %}
+      <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
+
+        {% if tweet.original %}
+          <!-- 🔁 リポスト -->
+          <p><strong>{{ tweet.user.username }}</strong> がリポストしました：</p>
+          <div style="margin-left: 20px; padding: 5px; border-left: 2px solid #ccc;">
+            <p><strong><a href="{% url 'user_profile' tweet.original.user.id %}">{{ tweet.original.user.username }}</a></strong>: {{ tweet.original.content }}</p>
+            <small>{{ tweet.original.created_at }}</small>
+            <div>
+              <a href="{% url 'reply_tweet' tweet.original.id %}"><button>💬 リプライ</button></a>
+              <a href="{% url 'retweet' tweet.original.id %}"><button>🔁 リポスト</button></a>
+              <button class="like-btn" data-id="{{ tweet.original.id }}">❤️ {{ tweet.original.likes.count }}</button>
+            </div>
+          </div>
+
+        {% else %}
+          <!-- 📝 通常投稿 -->
+          <p><strong><a href="{% url 'user_profile' tweet.user.id %}">{{ tweet.user.username }}</a></strong>: {{ tweet.content }}</p>
+          <small>{{ tweet.created_at }}</small>
+          <div>
+            <a href="{% url 'reply_tweet' tweet.id %}"><button>💬 リプライ</button></a>
+            <a href="{% url 'retweet' tweet.id %}"><button>🔁 リポスト</button></a>
+            <button class="like-btn" data-id="{{ tweet.id }}">❤️ {{ tweet.likes.count }}</button>
+          </div>
+        {% endif %}
+
+        <!-- 💬 リプライ一覧 -->
+        {% if tweet.original %}
+          {% if tweet.original.replies.all %}
+            <div style="margin-left: 30px; padding: 5px; background: #f5f5f5;">
+              <strong>💬 リプライ</strong><br>
+              {% for reply in tweet.original.replies.all %}
+                <p><strong>{{ reply.user.username }}</strong>: {{ reply.content }}</p>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% else %}
+          {% if tweet.replies.all %}
+            <div style="margin-left: 30px; padding: 5px; background: #f5f5f5;">
+              <strong>💬 リプライ</strong><br>
+              {% for reply in tweet.replies.all %}
+                <p><strong>{{ reply.user.username }}</strong>: {{ reply.content }}</p>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endif %}
+
+      </div>
+    {% endfor %}
+  {% else %}
+    <p>該当する投稿はありません。</p>
+  {% endif %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.like-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tweetId = btn.dataset.id;
+        fetch(`/like/${tweetId}/`, {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Accept': 'application/json',
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          btn.innerHTML = `❤️ ${data.count}`;
+        });
+      });
+    });
+  });
+</script>
+
+{% endblock %}
