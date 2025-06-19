@@ -1,12 +1,22 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}投稿{% endblock %}
 
 {% block content %}
-  <h2>つぶやきを投稿</h2>
-  <form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">投稿</button>
-  </form>
+<div class="container">
+  <div class="row">
+    <div class="col-md-8 col-md-offset-2">
+      <h2 class="text-center">✏️ 新しい投稿</h2>
+      <form method="post" class="text-center">
+        {% csrf_token %}
+        <div class="form-group">
+          {{ form.content.label_tag }}
+          {{ form.content }}
+        </div>
+        <button type="submit" class="btn btn-primary text-center">投稿</button>
+      </form>
+    </div>
+  </div>
+</div>
 {% endblock %}

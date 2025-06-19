@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}投稿詳細{% endblock %}
+
+{% block content %}
+<div class="container">
+  {% include 'core/tweet_card.html' with tweet=tweet show_controls=False %}
+
+  <!-- 💬 リプライ表示 -->
+  <div class="panel panel-default">
+    <div class="panel-heading"><strong>💬 リプライ</strong></div>
+    <div class="panel-body">
+      {% if replies %}
+        {% for reply in replies %}
+          <p><strong>{{ reply.user.username }}</strong>: {{ reply.content }}</p>
+        {% endfor %}
+      {% else %}
+        <p class="text-muted">リプライはまだありません。</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+  document.querySelector('.reply-btn')?.addEventListener('click', () => {
+    const tweetId = document.querySelector('.reply-btn').dataset.id;
+    window.location.href = `/reply/${tweetId}/`;
+  });
+</script>
+{% endblock %}

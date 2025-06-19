@@ -1,25 +1,48 @@
-<header>
-  <nav>
-    <ul style="list-style: none; padding: 0;">
-      <li><a href="{% url 'home' %}" style="display: block; padding: 10px;">🏠 Home</a></li>
-      <li><a href="{% url 'create_tweet' %}" style="display: block; padding: 10px;">✏️ 投稿</a></li>
-      <li><a href="#" style="display: block; padding: 10px;">💬 メッセージ</a></li>
-      <li><a href="{% url 'profile' %}" style="display: block; padding: 10px;">👤 プロフィール</a></li>
-      <li><a href="{% url 'logout' %}" style="display: block; padding: 10px;">🚪 ログアウト</a></li>
+{% load static %}
+
+<nav class="navbar navbar-inverse">
+  <div class="container-fluid">
+
+    <!-- 左側メニュー -->
+    <div class="navbar-header">
+      <a class="navbar-brand" href="{% url 'home' %}">X風SNS</a>
+    </div>
+
+    <!-- メインメニュー -->
+    <ul class="nav navbar-nav">
+      <li><a href="{% url 'home' %}">🏠 ホーム</a></li>
+      <li><a href="{% url 'create_tweet' %}">✏️ 投稿</a></li>
+      <li><a href="#">💬 メッセージ</a></li>
+      <li>
+        <a href="{% url 'profile' %}">
+          {% if user.profile.avatar %}
+            <img src="{{ user.profile.avatar.url }}" width="20" height="20" class="img-circle">
+          {% else %}
+            <img src="{% static 'default_icon.png' %}" width="25" height="25" class="img-circle">
+          {% endif %}
+          プロフィール
+        </a>
+      </li>
     </ul>
 
-    <!-- 🔍 検索フォーム -->
-    <form action="{% url 'search' %}" method="get" style="margin-top: 20px;">
-      <input type="text" name="q" placeholder="🔍 Search" style="
-        width: 100%;
-        border-radius: 999px;
-        padding: 6px 12px;
-        border: 1px solid #ccc;
-        background-color: #111;
-        color: #fff;
-      ">
-    </form>
-  </nav>
+    <!-- 右側メニュー -->
+    <ul class="nav navbar-nav navbar-right">
+      {% if user.is_authenticated %}
+        <li><a href="#"><span class="glyphicon glyphicon-user"></span> {{ user.username }}</a></li>
+        <li><a href="{% url 'logout' %}"><span class="glyphicon glyphicon-log-out"></span> ログアウト</a></li>
+      {% else %}
+        <li><a href="{% url 'login' %}"><span class="glyphicon glyphicon-log-in"></span> ログイン</a></li>
+      {% endif %}
+    </ul>
 
-  <hr>
-</header>
+    <!-- ✅ 中央に検索フォーム -->
+    <div style="text-align: center; margin-top: 10px;">
+      <form class="form-inline" action="{% url 'search' %}" method="get" role="search">
+        <div class="form-group">
+          <input type="text" class="form-control" name="q" placeholder="🔍 Search" style="width: 100%; box-sizing: border-box;">
+        </div>
+      </form>
+    </div>
+
+  </div>
+</nav>

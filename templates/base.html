@@ -3,6 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <title>{% block title %}My SNS{% endblock %}</title>
+<!-- Bootstrap 3.3.6 CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+<!-- Bootstrap 3.3.6 Theme (optional) -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css">
+
+<!-- jQuery（必須） -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<!-- Bootstrap 3.3.6 JS -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+
 </head>
 <body>
   <div style="display: flex; min-height: 100vh;">
@@ -13,7 +23,7 @@
     </aside>
 
     <!-- ✅ メインエリア（可変幅） -->
-    <main style="flex: 1; padding: 20px;">
+    <main style="flex: 1; padding: 20px; background-color: rgb(151, 151, 151);">
       {% block content %}
       {% endblock %}
     </main>

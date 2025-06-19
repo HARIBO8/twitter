@@ -1,0 +1,111 @@
+{% load static %}
+<div class="panel panel-default">
+  <div class="panel-body">
+
+    {% if tweet.original %}
+      <!-- 🔁 リポスト投稿 -->
+      <div class="media">
+        <div class="media-left">
+          {% with user_profile=tweet.user.profile %}
+            {% if user_profile.avatar %}
+              <img src="{{ user_profile.avatar.url }}" width="48" height="48" class="media-object img-circle" alt="アイコン">
+            {% else %}
+              <img src="{% static 'default_icon.png' %}" width="48" height="48" class="media-object img-circle" alt="デフォルトアイコン">
+            {% endif %}
+          {% endwith %}
+        </div>
+        <div class="media-body">
+          <strong>{{ tweet.user.username }}</strong> のリポスト
+        </div>
+      </div>
+
+      <div class="well" style="margin-top: 10px;">
+        <div class="media">
+          <div class="media-left">
+            {% with op=tweet.original.user.profile %}
+              {% if op.avatar %}
+                <img src="{{ op.avatar.url }}" width="40" height="40" class="media-object img-circle" alt="アイコン">
+              {% else %}
+                <img src="{% static 'default_icon.png' %}" width="40" height="40" class="media-object img-circle" alt="デフォルトアイコン">
+              {% endif %}
+            {% endwith %}
+          </div>
+          <div class="media-body">
+            <strong><a href="{% url 'user_profile' tweet.original.user.id %}">{{ tweet.original.user.username }}</a></strong>
+            <p>{{ tweet.original.content }}</p>
+          </div>
+        </div>
+        <div class="clearfix">
+          <div class="btn-group btn-group-xs" style="margin-top: 5px;">
+            <button class="btn btn-default reply-btn" data-id="{{ tweet.original.id }}">
+              <span class="glyphicon glyphicon-comment"></span> {{ tweet.original.replies.count }}件
+            </button>
+            <button class="btn btn-default retweet-btn" data-id="{{ tweet.original.id }}">
+              <span class="glyphicon glyphicon-retweet"></span> {{ tweet.original.retweets.count }}件
+            </button>
+            <button class="btn btn-default like-btn" data-id="{{ tweet.original.id }}">
+              <span class="glyphicon glyphicon-heart"></span> {{ tweet.original.likes.count }}件
+            </button>
+            <a href="{% url 'tweet_detail' tweet.original.id %}" class="btn btn-default">
+              <span class="glyphicon glyphicon-search"></span> 詳細
+            </a>
+          </div>
+          <small class="pull-right" style="margin-top: 8px;">{{ tweet.original.created_at }}</small>
+        </div>
+      </div>
+
+    {% else %}
+      <div class="row" style="align-items: center;">
+        <div class="col-xs-2" style="padding-right: 0;">
+          {% with user_profile=tweet.user.profile %}
+            {% if user_profile.avatar %}
+              <img src="{{ user_profile.avatar.url }}" class="img-circle" style="width:48px; height:48px;" alt="アイコン">
+            {% else %}
+              <img src="{% static 'default_icon.png' %}" class="img-circle" style="width:48px; height:48px;" alt="デフォルトアイコン">
+            {% endif %}
+          {% endwith %}
+          <strong>
+            <a href="{% url 'user_profile' tweet.user.id %}" style="font-size: 16px; text-decoration: none; color: inherit;">
+              {{ tweet.user.username }}
+            </a>
+          </strong>
+        </div>
+      </div>      
+
+      <!-- 中：投稿本文 -->
+      <div style="margin: 10px 0;">
+        <p style="font-size: 16px;">{{ tweet.content }}</p>
+      </div>
+
+      <!-- 下：操作ボタン + 投稿日時 -->
+      <div class="clearfix">
+        <div class="btn-group btn-group-xs" style="margin-top: 5px;">
+          <button class="btn btn-default reply-btn" data-id="{{ tweet.id }}">
+            <span class="glyphicon glyphicon-comment"></span> {{ tweet.replies.count }}件
+          </button>
+          <button class="btn btn-default retweet-btn" data-id="{{ tweet.id }}">
+            <span class="glyphicon glyphicon-retweet"></span> {{ tweet.retweets.count }}件
+          </button>
+          <button class="btn btn-default like-btn" data-id="{{ tweet.id }}">
+            <span class="glyphicon glyphicon-heart"></span> {{ tweet.likes.count }}件
+          </button>
+          <a href="{% url 'tweet_detail' tweet.id %}" class="btn btn-default">
+            <span class="glyphicon glyphicon-search"></span> 詳細
+          </a>
+        </div>
+        <small class="pull-right" style="margin-top: 8px;">{{ tweet.created_at }}</small>
+      </div>
+    {% endif %}
+
+    <!-- ✅ 編集・削除ボタン -->
+    {% if show_controls %}
+      <div style="margin-top: 5px;">
+        {% if not tweet.original %}
+          <a href="{% url 'edit_tweet' tweet.id %}">✏️ 編集</a> |
+        {% endif %}
+        <a href="{% url 'delete_tweet' tweet.id %}" onclick="return confirm('本当に削除しますか？');">🗑️ 削除</a>
+      </div>
+    {% endif %}
+
+  </div>
+</div>

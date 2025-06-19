@@ -1,127 +1,134 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}プロフィール{% endblock %}
+{% block title %}{{ profile_user.username }}のプロフィール{% endblock %}
 
 {% block content %}
+  <!-- アイコンと名前を横並びに -->
+  <div style="display: flex; align-items: center; margin-bottom: 15px;">
+    <div style="margin-right: 15px;">
+      {% if profile_user.profile.avatar %}
+        <img src="{{ profile_user.profile.avatar.url }}" class="img-circle" style="width:100px; height:100px;" alt="アイコン">
+      {% else %}
+        <img src="{% static 'default_icon.png' %}" class="img-circle" style="width:100px; height:100px;" alt="デフォルトアイコン">
+      {% endif %}
+    </div>
+    <div>
+      <h2 style="margin: 0;">{{ profile_user.username }} のプロフィール</h2>
+    </div>
+  </div>
 
-  <h2>👤 プロフィール</h2>
 
-  {% if profile.avatar %}
-    <img src="{{ profile.avatar.url }}" width="100" alt="プロフィール画像">
-  {% endif %}
-
-  <p><strong>ユーザー名：</strong> {{ request.user.username }}</p>
   <p><strong>自己紹介：</strong> {{ profile.bio }}</p>
 
   <hr>
 
-<p>
-  <button onclick="loadFollowList('followers')">フォロワー一覧</button>
-  <button onclick="loadFollowList('following')">フォロー中一覧</button>
-</p>
-
-<div id="follow-list-popup" style="display:none; border:1px solid #ccc; padding:10px;"></div>
-
-<script>
-function loadFollowList(type) {
-  const userId = "{{ request.user.id }}";  // ← 文字列として受け取る
-  fetch(`/${type}/${userId}/`)
-    .then(response => response.json())
-    .then(data => {
-      const div = document.getElementById('follow-list-popup');
-      div.innerHTML = '<h3>' + (type === 'followers' ? 'フォロワー' : 'フォロー中') + '</h3>';
-      data.forEach(user => {
-        div.innerHTML += '<p>' + user.username + '</p>';
-      });
-      div.style.display = 'block';
-    });
-}
-</script>
-
-
+  {% if request.user == profile_user %}
+    <!-- 自分のプロフィール：フォロー/フォロワー一覧 -->
+    <p>
+      <button onclick="loadFollowList('followers')">フォロワー一覧</button>
+      <button onclick="loadFollowList('following')">フォロー中一覧</button>
+    </p>
+    <p>
+      <a href="{% url 'edit_profile' %}" class="btn btn-sm btn-default">
+        ⚙️ プロフィールを編集
+      </a>
+    </p>
+    <div id="follow-list-popup" style="display:none; border:1px solid #ccc; padding:10px;"></div>
+  {% else %}
+    <!-- 他人のプロフィール：フォローボタン -->
+    <button id="follow-btn" data-user-id="{{ profile_user.id }}">
+      フォロー
+    </button>
+  {% endif %}
 
   <hr>
 
-  <h3>📝 あなたの投稿</h3>
+  <h3>📝 {{ profile_user.username }} の投稿</h3>
 
   {% for tweet in tweets %}
-    <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
-      {% if tweet.original %}
-        <p><strong>{{ tweet.user.username }}</strong> がリポストしました：</p>
-        <div style="margin-left: 20px; padding: 5px; border-left: 2px solid #ccc;">
-          <p><strong>{{ tweet.original.user.username }}</strong>: {{ tweet.original.content }}</p>
-          <small>{{ tweet.original.created_at }}</small>
-          <div>
-            <button class="reply-btn" data-id="{{ tweet.original.id }}">💬 {{ tweet.original.replies.count }}件</button>
-            <button class="retweet-btn" data-id="{{ tweet.original.id }}">🔁 {{ tweet.original.retweets.count }}件</button>
-            <button class="like-btn" data-id="{{ tweet.original.id }}">❤️ {{ tweet.original.likes.count }}件</button>
-          </div>
-        </div>
-      {% else %}
-        <p><strong>{{ tweet.user.username }}</strong>: {{ tweet.content }}</p>
-        <small>{{ tweet.created_at }}</small>
-        <div>
-          <button class="reply-btn" data-id="{{ tweet.id }}">💬 {{ tweet.replies.count }}件</button>
-          <button class="retweet-btn" data-id="{{ tweet.id }}">🔁 {{ tweet.retweets.count }}件</button>
-          <button class="like-btn" data-id="{{ tweet.id }}">❤️ {{ tweet.likes.count }}件</button>
-        </div>
-        {% if not tweet.original %}
-          <div style="margin-top: 5px;">
-            <a href="{% url 'edit_tweet' tweet.id %}">✏️ 編集</a> |
-            <a href="{% url 'delete_tweet' tweet.id %}" onclick="return confirm('本当に削除しますか？');">🗑️ 削除</a>
-          </div>
-        {% endif %}
-      {% endif %}
-    </div>
-  {% empty %}
-    <p>まだ投稿がありません。</p>
+    {% include 'core/tweet_card.html' with tweet=tweet show_controls=is_owner %}
   {% endfor %}
 
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
+  {% if request.user == profile_user %}
+    <script>
+      function loadFollowList(type) {
+        const userId = "{{ profile_user.id }}";
+        fetch(`/${type}/${userId}/`)
+          .then(response => response.json())
+          .then(data => {
+            const div = document.getElementById('follow-list-popup');
+            div.innerHTML = '<h3>' + (type === 'followers' ? 'フォロワー' : 'フォロー中') + '</h3>';
+            data.forEach(user => {
+              div.innerHTML += '<p>' + user.username + '</p>';
+            });
+            div.style.display = 'block';
+          });
+      }
+    </script>
+  {% endif %}
 
-    document.querySelectorAll('.like-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = btn.dataset.id;
-        fetch(`/like/${id}/`, {
-          method: 'POST',
-          headers: {
-            'X-CSRFToken': '{{ csrf_token }}',
-            'Accept': 'application/json',
-          }
-        })
-        .then(res => res.json())
-        .then(data => {
-          btn.innerHTML = `❤️ ${data.count}件`;
+  {% if request.user != profile_user %}
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        const btn = document.getElementById('follow-btn');
+        if (btn) {
+          btn.addEventListener('click', () => {
+            const userId = btn.dataset.userId;
+            fetch(`/follow-toggle/${userId}/`, {
+              method: 'POST',
+              headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Accept': 'application/json',
+              }
+            })
+            .then(response => response.json())
+            .then(data => {
+              btn.textContent = data.status === 'followed' ? 'フォロー解除' : 'フォロー';
+            });
+          });
+        }
+      });
+    </script>
+  {% endif %}
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.like-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.id;
+          fetch(`/like/${id}/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+          })
+          .then(res => res.json())
+          .then(data => {
+            btn.innerHTML = `❤️ ${data.count}件`;
+          });
+        });
+      });
+
+      document.querySelectorAll('.retweet-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.id;
+          fetch(`/retweet_toggle/${id}/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+          })
+          .then(res => res.json())
+          .then(data => {
+            btn.innerHTML = `🔁 ${data.count}件`;
+          });
+        });
+      });
+
+      document.querySelectorAll('.reply-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.id;
+          window.location.href = `/reply/${id}/`;
         });
       });
     });
-
-    document.querySelectorAll('.retweet-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = btn.dataset.id;
-        fetch(`/retweet_toggle/${id}/`, {
-          method: 'POST',
-          headers: {
-            'X-CSRFToken': '{{ csrf_token }}',
-            'Accept': 'application/json',
-          }
-        })
-        .then(res => res.json())
-        .then(data => {
-          btn.innerHTML = `🔁 ${data.count}件`;
-        });
-      });
-    });
-
-    document.querySelectorAll('.reply-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = btn.dataset.id;
-        window.location.href = `/reply/${id}/`;
-      });
-    });
-
-  });
-</script>
+  </script>
 
 {% endblock %}

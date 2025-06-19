@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
+from django.shortcuts import get_object_or_404
 
 
 def register(request):
@@ -60,29 +61,32 @@ def create_tweet(request):
     return render(request, 'core/create_tweet.html', {'form': form})
 
 
-
 @login_required
 def profile_view(request):
-    profile = request.user.profile
-    tweets = Tweet.objects.filter(user=request.user).order_by('-created_at')
+    profile_user = request.user  # 自分のプロフィール
+    profile = profile_user.profile
+    tweets = Tweet.objects.filter(user=profile_user, parent__isnull=True).order_by('-created_at')
     return render(request, 'core/profile.html', {
-        'profile': profile,
-        'tweets': tweets
-    })
-
-
-from django.shortcuts import get_object_or_404
-
-@login_required
-def user_profile(request, user_id):
-    user = get_object_or_404(User, id=user_id)
-    profile = user.profile
-    tweets = Tweet.objects.filter(user=user).order_by('-created_at')
-
-    return render(request, 'core/user_profile.html', {
-        'profile_user': user,
+        'profile_user': profile_user,
         'profile': profile,
         'tweets': tweets,
+        'is_owner': True  # 自分自身なのでTrue
+    })
+
+@login_required
+def profile_view(request, user_id=None):
+    if user_id:
+        profile_user = get_object_or_404(User, id=user_id)
+    else:
+        profile_user = request.user
+    profile = profile_user.profile
+    tweets = Tweet.objects.filter(user=profile_user, parent__isnull=True).order_by('-created_at')
+    is_owner = request.user == profile_user
+    return render(request, 'core/profile.html', {
+        'profile_user': profile_user,
+        'profile': profile,
+        'tweets': tweets,
+        'is_owner': is_owner
     })
 
 
@@ -207,3 +211,29 @@ def delete_tweet(request, tweet_id):
     tweet = get_object_or_404(Tweet, id=tweet_id, user=request.user)
     tweet.delete()
     return redirect('profile')
+
+
+def tweet_detail(request, tweet_id):
+    tweet = get_object_or_404(Tweet, id=tweet_id)
+    replies = tweet.replies.all()  # 親がこのtweetのリプライたち
+    return render(request, 'core/tweet_detail.html', {
+        'tweet': tweet,
+        'replies': replies,
+    })
+
+
+from .forms import ProfileForm
+
+@login_required
+def edit_profile(request):
+    profile = request.user.profile
+    if request.method == 'POST':
+        form = ProfileForm(request.POST, request.FILES, instance=profile)
+        if form.is_valid():
+            form.save()
+            return redirect('profile')  # プロフィールページに戻る
+    else:
+        form = ProfileForm(instance=profile)
+
+    return render(request, 'core/edit_profile.html', {'form': form})
+
