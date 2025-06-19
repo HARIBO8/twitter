@@ -25,14 +25,107 @@
 <!-- ✅ 投稿表示 -->
 {% if tweets %}
   {% for tweet in tweets %}
-    <p>
-      <strong><a href="{% url 'user_profile' tweet.user.id %}">{{ tweet.user.username }}</a></strong>：  
-      {{ tweet.content }}<br>
-      <small>{{ tweet.created_at }}</small>
-    </p>
+    <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
+      
+      {% if tweet.original %}
+        <!-- 🔁 リポストの場合 -->
+        <p><strong>{{ tweet.user.username }}</strong> がリポストしました：</p>
+        <div style="margin-left: 20px; padding: 5px; border-left: 2px solid #ccc;">
+          <p><strong><a href="{% url 'user_profile' tweet.original.user.id %}">{{ tweet.original.user.username }}</a></strong>: {{ tweet.original.content }}</p>
+          <small>{{ tweet.original.created_at }}</small>
+          <div>
+            <button class="reply-btn" data-id="{{ tweet.original.id }}">💬 {{ tweet.original.replies.count }}件</button>
+            <button class="retweet-btn" data-id="{{ tweet.original.id }}">🔁 {{ tweet.original.retweets.count }}件</button>
+            <button class="like-btn" data-id="{{ tweet.original.id }}">❤️ {{ tweet.original.likes.count }}</button>
+          </div>
+        </div>
+      {% else %}
+        <!-- 📝 通常投稿 -->
+        <p><strong><a href="{% url 'user_profile' tweet.user.id %}">{{ tweet.user.username }}</a></strong>: {{ tweet.content }}</p>
+        <small>{{ tweet.created_at }}</small>
+        <div>
+          <button class="reply-btn" data-id="{{ tweet.id }}">💬 {{ tweet.replies.count }}件</button>
+          <button class="retweet-btn" data-id="{{ tweet.id }}">🔁 {{ tweet.retweets.count }}件</button>
+          <button class="like-btn" data-id="{{ tweet.id }}">❤️ {{ tweet.likes.count }}</button>
+        </div>
+      {% endif %}
+
+      <!-- 💬 リプライ表示（リポスト元 or 通常） -->
+      {% if tweet.original %}
+        {% if tweet.original.replies.all %}
+          <div style="margin-left: 30px; padding: 5px; background: #f5f5f5;">
+            <strong>💬 リプライ</strong><br>
+            {% for reply in tweet.original.replies.all %}
+              <p><strong>{{ reply.user.username }}</strong>: {{ reply.content }}</p>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% else %}
+        {% if tweet.replies.all %}
+          <div style="margin-left: 30px; padding: 5px; background: #f5f5f5;">
+            <strong>💬 リプライ</strong><br>
+            {% for reply in tweet.replies.all %}
+              <p><strong>{{ reply.user.username }}</strong>: {{ reply.content }}</p>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endif %}
+
+    </div>
   {% endfor %}
 {% else %}
   <p>投稿がありません。</p>
 {% endif %}
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+
+    // ❤️ Likeボタン
+    document.querySelectorAll('.like-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tweetId = btn.dataset.id;
+        fetch(`/like/${tweetId}/`, {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Accept': 'application/json',
+          }
+        })
+        .then(res => res.json())
+        .then(data => {
+          btn.innerHTML = `❤️ ${data.count}件`;
+        });
+      });
+    });
+
+    // 🔁 Retweetボタン
+    document.querySelectorAll('.retweet-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tweetId = btn.dataset.id;
+        fetch(`/retweet_toggle/${tweetId}/`, {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Accept': 'application/json',
+          }
+        })
+        .then(res => res.json())
+        .then(data => {
+          btn.innerHTML = `🔁 ${data.count}件`;
+        });
+      });
+    });
+
+    // 💬 リプライボタン（非onclick形式）
+    document.querySelectorAll('.reply-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tweetId = btn.dataset.id;
+        window.location.href = `/reply/${tweetId}/`;
+      });
+    });
+
+  });
+</script>
+
 
 {% endblock %}

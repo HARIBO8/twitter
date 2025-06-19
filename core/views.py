@@ -24,17 +24,23 @@ def home(request):
     filter_type = request.GET.get('filter', 'all')
 
     if filter_type == 'follow':
-        # フォロー中ユーザーの投稿のみ
+        # フォロー中ユーザーの投稿（リプライを除く）
         following_ids = Follow.objects.filter(follower=request.user).values_list('following__id', flat=True)
-        tweets = Tweet.objects.filter(user__id__in=following_ids).order_by('-created_at')
+        tweets = Tweet.objects.filter(
+            user__id__in=following_ids,
+            parent__isnull=True
+        ).order_by('-created_at')
     else:
-        # 全ユーザーの投稿
-        tweets = Tweet.objects.all().order_by('-created_at')
+        # 全ユーザーの投稿（リプライを除く）
+        tweets = Tweet.objects.filter(
+            parent__isnull=True
+        ).order_by('-created_at')
 
     return render(request, 'core/home.html', {
         'tweets': tweets,
         'filter_type': filter_type,
     })
+
 
 
 
@@ -110,3 +116,94 @@ def get_following(request, user_id):
     followings = user.following_set.select_related('following')
     data = [{'username': f.following.username} for f in followings]
     return JsonResponse(data, safe=False)
+
+
+from django.http import JsonResponse
+from .models import Like, Tweet
+
+@login_required
+def toggle_like(request, tweet_id):
+    tweet = get_object_or_404(Tweet, id=tweet_id)
+    like, created = Like.objects.get_or_create(user=request.user, tweet=tweet)
+    if not created:
+        like.delete()
+        status = 'unliked'
+    else:
+        status = 'liked'
+    return JsonResponse({'status': status, 'count': tweet.likes.count()})
+
+
+@login_required
+def reply_tweet(request, tweet_id):
+    parent = get_object_or_404(Tweet, id=tweet_id)
+
+    if request.method == 'POST':
+        content = request.POST.get('content')
+        if content:
+            Tweet.objects.create(user=request.user, content=content, parent=parent)
+            return redirect('home')
+    
+    return render(request, 'core/reply.html', {'parent': parent})
+
+
+@login_required
+def retweet(request, tweet_id):
+    original = get_object_or_404(Tweet, id=tweet_id)
+
+    # 同じ投稿をリツイート済かどうかチェック（1回のみ許可）
+    already = Tweet.objects.filter(user=request.user, original=original).exists()
+    if not already:
+        Tweet.objects.create(user=request.user, original=original)
+    
+    return redirect('home')
+
+@login_required
+def search(request):
+    query = request.GET.get('q', '')
+    tweets = []
+
+    if query.startswith('#'):
+        # ハッシュタグ検索
+        tag = query[1:]  # 先頭の # を除去
+        tweets = Tweet.objects.filter(content__icontains=f'#{tag}', parent__isnull=True).order_by('-created_at')
+
+    return render(request, 'core/search.html', {
+        'query': query,
+        'tweets': tweets,
+    })
+
+
+from django.http import JsonResponse
+
+@login_required
+def toggle_retweet(request, tweet_id):
+    original = get_object_or_404(Tweet, id=tweet_id)
+    existing = Tweet.objects.filter(user=request.user, original=original).first()
+
+    if existing:
+        existing.delete()
+        status = 'unretweeted'
+    else:
+        Tweet.objects.create(user=request.user, original=original)
+        status = 'retweeted'
+
+    count = original.retweets.count()
+    return JsonResponse({'status': status, 'count': count})
+
+
+@login_required
+def edit_tweet(request, tweet_id):
+    tweet = get_object_or_404(Tweet, id=tweet_id, user=request.user)
+
+    if request.method == 'POST':
+        tweet.content = request.POST.get('content')
+        tweet.save()
+        return redirect('profile')
+
+    return render(request, 'core/edit_tweet.html', {'tweet': tweet})
+
+@login_required
+def delete_tweet(request, tweet_id):
+    tweet = get_object_or_404(Tweet, id=tweet_id, user=request.user)
+    tweet.delete()
+    return redirect('profile')

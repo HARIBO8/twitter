@@ -31,6 +31,13 @@ urlpatterns = [
     path('tweet/new/', views.create_tweet, name='create_tweet'),
     path('profile/', views.profile_view, name='profile'),
     path('user/<int:user_id>/', views.user_profile, name='user_profile'),
+    path('like/<int:tweet_id>/', views.toggle_like, name='toggle_like'),
+    path('reply/<int:tweet_id>/', views.reply_tweet, name='reply_tweet'),
+    path('retweet/<int:tweet_id>/', views.retweet, name='retweet'),
+    path('search/', views.search, name='search'),
+    path('retweet_toggle/<int:tweet_id>/', views.toggle_retweet, name='toggle_retweet'),
+    path('tweet/<int:tweet_id>/edit/', views.edit_tweet, name='edit_tweet'),
+    path('tweet/<int:tweet_id>/delete/', views.delete_tweet, name='delete_tweet'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 

@@ -1,11 +1,25 @@
 <header>
   <nav>
-    <a href="{% url 'home' %}">🏠 HOME</a> |
-    <a href="{% url 'create_tweet' %}">✏️ 投稿</a> |
-    <a href="#">🔍 検索</a> |
-    <a href="{% url 'profile' %}">👤 プロフィール</a> |
-    <a href="#">💬 メッセージ</a> |
-    <a href="{% url 'logout' %}">🚪 ログアウト</a>
+    <ul style="list-style: none; padding: 0;">
+      <li><a href="{% url 'home' %}" style="display: block; padding: 10px;">🏠 Home</a></li>
+      <li><a href="{% url 'create_tweet' %}" style="display: block; padding: 10px;">✏️ 投稿</a></li>
+      <li><a href="#" style="display: block; padding: 10px;">💬 メッセージ</a></li>
+      <li><a href="{% url 'profile' %}" style="display: block; padding: 10px;">👤 プロフィール</a></li>
+      <li><a href="{% url 'logout' %}" style="display: block; padding: 10px;">🚪 ログアウト</a></li>
+    </ul>
+
+    <!-- 🔍 検索フォーム -->
+    <form action="{% url 'search' %}" method="get" style="margin-top: 20px;">
+      <input type="text" name="q" placeholder="🔍 Search" style="
+        width: 100%;
+        border-radius: 999px;
+        padding: 6px 12px;
+        border: 1px solid #ccc;
+        background-color: #111;
+        color: #fff;
+      ">
+    </form>
   </nav>
+
   <hr>
 </header>
